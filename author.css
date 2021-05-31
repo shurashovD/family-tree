@@ -1,0 +1,77 @@
+* {
+    box-sizing: border-box;
+}
+
+html {
+    --blue: #a0a0ff;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    color: #303030;
+}
+
+form {
+    margin: auto;
+    padding: 40px;
+    border: 2px solid var(--blue);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+p {
+    font-weight: 550;
+    font-size: 24px;
+    margin: 0 auto;
+    margin-bottom: 20px;
+}
+
+label {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+input[type="text"], input[type="pass"] {
+    width: 100%;
+    border: 1px solid var(--blue);
+    padding: 6px 12px;
+    border-radius: 6px;
+}
+input[type="text"], input[type="pass"]:focus {
+    outline: none;
+}
+
+input[type="submit"] {
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    color: white;
+    background-color: var(--blue);
+    margin-bottom: 10px;
+}
+input[type="submit"]:focus {
+    outline: none;
+}
+
+span {
+    font-size: 10px;
+    color: red;
+}
+
+a {
+    text-decoration: none;
+    color: var(--blue);
+    transition: .2s;
+}
+a:hover {
+    color: blue;
+}
+
