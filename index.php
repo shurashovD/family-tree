@@ -1,6 +1,6 @@
 <?php
     require_once("author.php");
-    $footer = '';
+    $footer = '<span class="counter"></span>';
     if ( $_SESSION['user_rights'] == 'ADMIN' ) {
         $input_files = '<label class="pop-up-label">Тіркемелер';
         $input_files .= '<input type="file" class="pop-up__input" multiple accept=".jpg, .jpeg, .png" oninput="sendFiles(this)"></label>';

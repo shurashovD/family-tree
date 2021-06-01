@@ -9,6 +9,7 @@ const additInfoForm = document.getElementById('addit-info-pop-up');
 const footer = document.querySelector('footer');
 const mMenuBtn = document.querySelector('.mobile-menu');
 const searchDropdownList = document.querySelector('.pop-up-dropdown-list');
+const counterSpan = document.querySelector('.counter');
 
 let touches = [];
 let move = false;
@@ -23,13 +24,15 @@ const mouseDown = 'mousedown';
 const mouseMove = 'mousemove';
 const mouseUp = 'mouseup';
 
+const openCards = new Set();
+
+const showedCards = new Set();
+
 let currentAddCardId = -1;
 
-let ShownChildArr = [];
+let activeCardId = null;
 
 let TREE = [];
-
-let TREES = [];
 
 let Rights = [];
 
@@ -151,10 +154,9 @@ const canvasResize = () => {
     }
 }
 
-const renderCanvas = async (clickCard) => {
-    await RaingoldTilford(clickCard);
-
+const renderCanvas = async () => {
     canvasResize();
+
     ctx.fillStyle = '#fff6d4';
     ctx.strokeStyle = '#303030';
     ctx.lineWidth = 4;
@@ -178,12 +180,12 @@ const renderCanvas = async (clickCard) => {
         if ( parentId != '-1' ) {
             const parentCard = area.querySelector('div[data-id="' + parentId + '"]');
             const P0 = {
-                x: (parentCard.offsetParent.offsetLeft + parentCard.offsetLeft + parentCard.offsetWidth),
-                y: (parentCard.offsetParent.offsetTop + parentCard.offsetTop + parseInt(parentCard.offsetHeight/2))
+                x: (parentCard.offsetLeft + parentCard.offsetWidth),
+                y: (parentCard.offsetTop + parseInt(parentCard.offsetHeight/2))
             };
             const P3 = {
-                x: (card.offsetParent.offsetLeft + card.offsetLeft),
-                y: (card.offsetParent.offsetTop + card.offsetTop + parseInt(card.offsetHeight/2))
+                x: (card.offsetLeft),
+                y: (card.offsetTop + parseInt(card.offsetHeight/2))
             };
             const P1 = { x: (P0.x + 20), y: P0.y };
             const P2 = { x: (P3.x - 20), y: P3.y };
@@ -255,369 +257,95 @@ const areaZoom = (wheel) => {
     canvas.style.transform = 'scale(' + scale.value + ')';
 }
 
-const arrangement = (card) => {
-    const sortTree = () => {
-        let flag = true;
-        while ( flag ) {
-            flag = false;
-            TREE.sort((a, b) => {
-                if ( a.parentId == b.parentId ) return 1;
-                if ( TREE.findIndex(item => item.id == a.parentId) < TREE.findIndex(item => item.id == b.parentId) ) {
-                    flag = true;
-                    return -1;
-                }
-                return 1;
-            });
-        }
-    } 
+const showHideChilds = (card) => {
+    const cardId = card.getAttribute('data-id');
+    openCards.has(cardId) ? openCards.delete(cardId) : openCards.add(cardId);
+    activeCardId = cardId;
+    TREE.filter(item => item.parentId == cardId).forEach(item => showedCards.has(item.id) ? showedCards.delete(item.id) : showedCards.add(item.id));
+}
 
-    const parentsNum = (card) => {
-        if ( card.id == 1 ) return -1;
-        let parentId = card.parentId;
-        let j = 0;
-        if ( parentId == 1 ) return 0;
-        while ( parentId != 1 ) {
-            j++;
-            parentId = TREE.find(item => item.id == parentId).parentId;
-        }
-        return j;
+const createData = () => {
+    const showElements = TREE.filter(item => showedCards.has(item.id));
+    if ( showElements[0]?.id != 1 ) showElements.push(TREE[0]);
+
+    const addChildren = obj => {
+        showElements.filter(item => item.parentId == obj.id).forEach(item => {
+            obj.children.push({
+                id: item.id,
+                name: item.name,
+                men: item.men,
+                children: []
+            });
+        });
+        obj.children.forEach(item => addChildren(item));
     }
-    
-    sortTree();
-    
+
+    const data = {
+        id: 1,
+        name: TREE.find(item => item.id == 1).name,
+        men: 1,
+        children: []
+    }
+
+    addChildren(data);
+
+    const root = d3.hierarchy(data);
+
+    return d3.tree().nodeSize([60, 250])(root);
+}
+
+const arrangement = async () => {
+    let minX = 0, minY = 0, maxX = 0, maxY = 0;
+
+    const createHTML = obj => {
+        const div = document.createElement('div');
+        const divImg = document.createElement('div');
+        const span = document.createElement('span');
+
+        div.classList.add('card');
+        div.classList.add('men-card');
+        if ( obj.data.men != 1 ) div.classList.add('women-card');
+        if ( openCards.has(obj.data.id) ) div.classList.add('open-card');
+        if ( obj.data.id == activeCardId ) div.classList.add('active-card');
+
+        divImg.classList.add('card-img');
+        if (obj.data.men != 1) divImg.classList.add('women-card-img');
+        span.classList.add('card-title');
+        span.textContent = obj.data.name;
+
+        div.setAttribute('data-id', obj.data.id);
+        div.setAttribute('data-parent-id', obj.parent?.data.id ?? '-1');
+
+        div.insertAdjacentElement('beforeend', divImg);
+        div.insertAdjacentElement('beforeend', span);
+        area.insertAdjacentElement('beforeend', div);
+
+        div.style.top = obj.x + 'px';
+        div.style.left = obj.y + 'px';
+
+        if ( obj.x < minX ) minX = obj.x;
+        if ( obj.y < minY ) minY = obj.y;
+        if ( obj.x > maxX ) maxX = obj.x;
+        if ( obj.y > maxY ) maxY = obj.y;
+
+        if ( !obj.children ) return true;
+        if ( obj.children.length == 0 ) return true;
+        obj.children.forEach(item => createHTML(item));
+    }
+
     area.textContent = '';
 
-    let i = 0;
-    let depth = null;
-    TREE.forEach(item => {
-        if ( parentsNum(item) != depth ) {
-            depth = parentsNum(item);
-            const div = document.createElement('div');
-            div.classList.add('col');
-            area.insertAdjacentElement('beforeend', div);
-        }
-        const cardImg = (item.men == 1) ? '<div class="card-img"></div>' : '<div class="card-img women-card-img"></div>';
-        const className = (item.men == 1) ? 'men-card' : 'women-card';
-        const col = area.lastChild;
-        col.insertAdjacentHTML('beforeend', `
-            <div class="card ${className}" data-id="${item.id}" data-parent-id="${item.parentId}">
-                ${cardImg}
-                <span class="card-title">${item.name}</span>
-            </div>
-        `);
-        i++
+    const Data = await createData();
+    await createHTML(Data);
+
+    area.style.height = Math.abs(maxX-minX) + 100 + 'px';
+    area.style.width = Math.abs(maxY-minY) + 'px';
+
+    await document.querySelectorAll('.card').forEach(card => {
+        card.style.top = card.offsetTop - minX + 'px';
     });
 
-    ShownChildArr.forEach((item, index) => {
-        showHideChilds(document.querySelector('div.card[data-id="' + item + '"]'));
-        if ( index == ShownChildArr.length-1 ) renderCanvas(card);
-    });
-
-    if ( currentAddCardId != -1 ) {
-        area.querySelector('.card[data-id="' + currentAddCardId + '"]').classList.add('active-card');
-    }
-}
-
-const distribution = () => {
-    const AllCards = Array.from(document.getElementsByClassName('card')).filter(item => item.offsetWidth > 0);
-    AllCards.forEach(item => item.style.top = 0);
-    const allCols = document.querySelectorAll('.col');
-    let Cols = [];
-    allCols.forEach(item => {
-        const cardVisible = Array.from(item.getElementsByClassName('card')).find(el => el.offsetWidth > 0);
-        if ( cardVisible ) {
-            item.style.width = cardVisible.offsetWidth + 40 + 'px';
-            Cols.push(item);
-        }
-        else {
-            item.style.width = 0;
-            item.style.height = 0;
-        }
-    });
-
-    const getDeep = (card) => {
-        let result = 0;
-        const id = card.getAttribute('data-id');
-        const myChilds = AllCards.filter(item => item.getAttribute('data-parent-id') == id);
-
-        myChilds.forEach(item => {
-            const deep = getDeep(item);
-            result += (item.offsetHeight > deep) ? (item.offsetHeight + 6) : deep;
-        });
-
-        return result;
-    }
-
-    for ( let i in Cols ) {
-        col = Cols[i];                      // обход всех колонок слева-направо;
-        const colCards = Array.from(col.getElementsByClassName('card')).filter(item => item.offsetWidth > 0);
-        let top = 0;
-        let currentParentId = -2;
-        colCards.forEach(card => {          // обход всех карточек в колонке;
-            const deep = getDeep(card);     // высота, которую займёт карточка вместе с потомками;
-            card.setAttribute('data-deep', deep);
-            const parentId = card.getAttribute('data-parent-id');
-            if ( parentId != currentParentId ) {
-                currentParentId = parentId;
-                top = 0;
-            }
-            const parentCard = AllCards.find(item => item.getAttribute('data-id') == parentId);
-            let conteinerStart = 0;
-            if ( parentCard ) {
-                const parentCardDeep = parentCard.getAttribute('data-deep');
-                const parentCardMiddle = parentCard.offsetTop + parseInt(parentCard.offsetHeight/2);
-                conteinerStart = parentCardMiddle - parseInt(parentCardDeep/2);
-            }
-            // смещение карточки с резервированием места для потомков;
-            let shiftTop = 3;
-            if ((deep>card.offsetHeight) && card.hasAttribute('data-childs-shown'))
-            shiftTop = parseInt((deep-card.offsetHeight)/2);
-            // позиционирование карточки;
-            card.style.top = conteinerStart + top + shiftTop + 'px';
-            // резервирование места карточки;
-            top += (card.offsetHeight > deep) ? (card.offsetHeight + 6) : deep;
-        });
-    }
-
-    let reverseShift = 0;
-    AllCards.forEach(item => {
-        if ( item.offsetTop < reverseShift ) reverseShift = item.offsetTop;
-    });
-    AllCards.forEach(item => item.style.top = item.offsetTop - reverseShift + 'px');
-
-    Cols.forEach(col => {
-        const colCards = Array.from(col.getElementsByClassName('card')).filter(item => item.offsetWidth > 0);
-        const colLastCard = colCards[colCards.length - 1];
-        col.style.height = colLastCard.offsetHeight + colLastCard.offsetTop + 'px';
-    });
-
-    //RainoldTilford();
-}
-
-const RaingoldTilford = async (clickCard) => {
-    if (!clickCard) return;
-
-    const getLevel = (node, current) => {
-        let level = current ?? 0;
-        const parent = Nodes.find(item => item.id == node.parentId);
-        return parent ? getLevel(parent, ++level) : level;
-    }
-
-    const getAbsolutePosition = (node, result) => {
-        result = result ?? node.pos;
-        const parent = Nodes.find(item => item.id == node.parentId);
-        return parent ? getAbsolutePosition(parent, (result + parent.pos)) : result;
-    }
-    
-    const getBasePosition = (node) => {
-        const neighbors = Nodes.filter(item => item.parentId == node.parentId);
-        const index = neighbors.findIndex(item => item.id == node.id);
-        return (neighbors.length - 1) - index*2;
-    }
-
-    const changeTrees = async (up, down, range) => {
-        let shift = Math.abs(Math.ceil(range/2)) + 1;
-        if ( shift%2 == 0 ) ++shift;
-        let dinamic = shift;
-        const neighbors = Nodes.filter(item => item.parentId == up.parentId);
-        neighbors.forEach(node => {
-            node.pos += dinamic;
-            if ( node.id == up.id ) dinamic = 0;
-            if ( node.id == down.id ) {
-                dinamic = -shift;
-                node.pos += dinamic;
-            }
-        });
-        await updateTrees(neighbors);
-    }
-
-    const checkCross = async (nodes) => {
-        const parentNode = Nodes.find(item => item.id == nodes[0].parentId);
-        if (!parentNode) return;
-        const parentNodeTree = TREES.find(item => item.root == parentNode.id);
-        if (!parentNodeTree) return;
-
-        const neighbors = Nodes.filter(item => item.parentId == parentNode.parentId);
-        const neighborsTrees = TREES.map(tree => {
-            if (neighbors.some(item => item.id == tree.root)) 
-            return tree;
-        }).filter(item => (typeof item != 'undefined'));
-
-        let flag = 'before';
-        for (let neighbor of neighborsTrees) {
-            if ( neighbor.root == parentNode.id ) {
-                flag = 'after';
-                continue;
-            }
-            for (let degree of parentNodeTree.enclosure) {
-                const {level, top, bot} = degree;
-                const neighborDegree = neighbor.enclosure.find(item => item.level == level);
-                if (neighborDegree) {
-                    if ( flag == 'before' ) {
-                        const range = (getAbsolutePosition(neighborDegree.bot) - getAbsolutePosition(top));
-                        if ( range < 2 ) {
-                            await changeTrees(Nodes.find(item => item.id == neighbor.root), parentNode, range);
-                        }
-                    }
-                    if ( flag == 'after' ) {
-                        const range = (getAbsolutePosition(bot) - getAbsolutePosition(neighborDegree.top));
-                        if ( range < 2 ) {
-                            await changeTrees(parentNode, Nodes.find(item => item.id == neighbor.root), range);
-                        }
-                    }
-                }
-            }
-        }
-        if ( neighbors ) await checkCross(neighbors);
-    }
-
-    const updateTrees = (nodes) => {
-        const parentNode = Nodes.find(item => item.id == nodes[0].parentId);
-        if (parentNode) {
-            let parentNodeTree;
-            const thisTrees = TREES.map(item => {
-                const {root} = item;
-                if ( root == parentNode.id ) parentNodeTree = item;
-                if ( nodes.some(item => item.id == root) ) return item;
-            }).filter(item => (typeof item != 'undefined'));
-            if (parentNodeTree) {
-                nodes.forEach(node => {
-                    const nodeTree = thisTrees.find(item => item.root == node.id);
-                    nodeTree.enclosure.forEach(enc => {
-                        const parentNodeTreeLevel = parentNodeTree.enclosure.find(item => item.level == enc.level);
-                        if (parentNodeTreeLevel) {
-                            const parentNodeLevelTop = getAbsolutePosition(parentNodeTreeLevel.top);
-                            const encTop = getAbsolutePosition(enc.top);
-                            const parentNodeTreeLevelBot = getAbsolutePosition(parentNodeTreeLevel.bot);
-                            const encBot = getAbsolutePosition(enc.bot);
-                            if ( parentNodeLevelTop < encTop ) parentNodeTreeLevel.top = enc.top;
-                            if ( parentNodeTreeLevelBot > encBot ) parentNodeTreeLevel.bot = enc.bot;
-                        }
-                        else {
-                            parentNodeTree.enclosure.push({
-                                level: enc.level,
-                                top: enc.top,
-                                bot: enc.bot
-                            });
-                        }
-                    });
-                });
-            }
-
-            const nodeList = Nodes.filter(item => item.parentId == parentNode.parentId);
-            if (nodeList.length > 0) updateTrees(nodeList);
-            else return;
-        }
-        else return;
-    }
-
-    const mainOpenCard = async (clickCard) => {
-        const clickCardId = clickCard.getAttribute('data-id');
-        const nodeList = Nodes.filter(item => item.parentId == clickCardId);
-        if (nodeList.length == 0) return;
-        const level = getLevel(nodeList[0]);
-        for (let item of nodeList) {
-            item.pos = getBasePosition(item);
-            if (!TREES.some(tree => tree.root == item.id))
-            TREES.push({
-                root: item.id,
-                enclosure: [
-                    {
-                        level: level,
-                        top: item,
-                        bot: item
-                    }
-                ]
-            });
-        }
-        await updateTrees(nodeList);
-        await checkCross(nodeList);
-    }
-
-    const main = async () => {
-        let level = 1;
-        let nodeList = Nodes.filter(item => getLevel(item) == level);
-        while( nodeList.length != 0 ) {
-            let group = [];
-            let Groups = [];
-            let parentId = nodeList[0].parentId;
-            for ( let node of nodeList ) {
-                if ( node.parentId != parentId ) {
-                    Groups.push(group);
-                    group = [];
-                    parentId = node.parentId;
-                }
-                group.push(node);
-                node.pos = getBasePosition(node);
-                if (!TREES.some(tree => tree.root == node.id))
-                TREES.push({
-                    root: node.id,
-                    enclosure: [
-                        {
-                            level: level,
-                            top: node,
-                            bot: node
-                        }
-                    ]
-                });
-            }
-            Groups.push(group);
-
-            for (let nodeList of Groups) {
-                await updateTrees(nodeList);
-                await checkCross(nodeList);
-            }
-
-            ++level;
-            nodeList = Nodes.filter(item => getLevel(item) == level);
-        }
-    }
-
-    const founderCard = document.querySelector('.card')
-    const cellHeight = parseInt(founderCard.offsetHeight/2 + 3);
-    const origin = founderCard.offsetTop + parseInt(founderCard.offsetHeight/2);
-    const AllCards = Array.from(document.getElementsByClassName('card')).filter(item => item.offsetWidth > 0);
-    const Nodes = TREE.filter(item => AllCards.some(card => card.getAttribute('data-id') == item.id));
-    Nodes[0].pos = 0;
-    const allCols = document.querySelectorAll('.col');
-    let Cols = [];
-
-    if (clickCard?.hasAttribute('data-childs-shown')) await mainOpenCard(clickCard);
-    else {
-        TREES = [];
-        await main(clickCard);
-    }
-
-    AllCards.forEach(card => {
-        const cardId = card.getAttribute('data-id');
-        const node = Nodes.find(node => node.id == cardId);
-        if (!node.pos) node.pos = getBasePosition(node);
-        card.style.top = origin - getAbsolutePosition(node) * cellHeight + 'px';
-    });
-
-    let reverseShift = 0;
-    AllCards.forEach(item => {
-        if ( item.offsetTop < reverseShift ) reverseShift = item.offsetTop;
-    });
-    AllCards.forEach(item => item.style.top = item.offsetTop - reverseShift + 'px');
-
-    allCols.forEach(item => {
-        const cardVisible = Array.from(item.getElementsByClassName('card')).find(el => el.offsetWidth > 0);
-        if ( cardVisible ) {
-            item.style.width = cardVisible.offsetWidth + 40 + 'px';
-            Cols.push(item);
-        }
-        else {
-            item.style.width = 0;
-            item.style.height = 0;
-        }
-    });
-
-    Cols.forEach(col => {
-        const colCards = Array.from(col.getElementsByClassName('card')).filter(item => item.offsetWidth > 0);
-        const colLastCard = colCards[colCards.length - 1];
-        col.style.height = colLastCard.offsetHeight + colLastCard.offsetTop + 'px';
-    });
+    await renderCanvas();
 }
 
 
@@ -694,8 +422,11 @@ const deleteBtnClick = async () => {
     try {
         const msgFromSRV = JSON.parse(result);
         TREE = msgFromSRV.tree;
+        counterSpan.textContent = TREE.length;
+        TREE.filter(item => item.parentId == activeCardId).forEach(item => showedCards.add(item.id));
         infoPopUp.querySelector('.pop-up__title').textContent = 'Элемент сәтті жойылды';
         showPopUp('#info-pop-up');
+        showHideChilds(document.querySelector(`.card[data-id="${activeCardId}"]`));
         arrangement();
     }
     catch {
@@ -762,32 +493,6 @@ const logout = () => {
     });
 }
 
-const showHideChilds = (card) => {
-    if ( !card ) return;
-    const hideChilds = (card) => {
-        card.removeAttribute('data-childs-shown');
-        card.classList.remove('open-card');
-        const id = card.getAttribute('data-id');
-        const spliceStart = ShownChildArr.indexOf(id);
-        if ( spliceStart != -1 )
-        ShownChildArr.splice(spliceStart, 1);
-        area.querySelectorAll('div[data-parent-id="' + id + '"]').forEach(item => {
-            item.style.display = 'none';
-            hideChilds(item);
-        });
-    }
-
-    if ( card.hasAttribute('data-childs-shown') ) hideChilds(card);
-    else {
-        card.setAttribute('data-childs-shown', true);
-        card.classList.add('open-card');
-        const id = card.getAttribute('data-id');
-        if ( ShownChildArr.indexOf(id) == -1 )
-        ShownChildArr.push(id);
-        area.querySelectorAll('div[data-parent-id="' + id + '"]').forEach(item => item.style.display = 'flex');
-    }
-}
-
 const cardSearchHint = (value) => {
     const str = value.toLowerCase();
     searchDropdownList.textContent = '';
@@ -826,6 +531,11 @@ const addFormSubmit = async (event) => {
         try {
             const msgFromSRV = JSON.parse(result);
             TREE = msgFromSRV.tree;
+            counterSpan.textContent = TREE.length;
+            TREE.filter(item => item.parentId == activeCardId).forEach(item => showedCards.add(item.id));
+            hidePopUp(event.target.querySelector('input[type="submit"]'));
+            showHideChilds(document.querySelector(`.card[data-id="${activeCardId}"]`));
+            arrangement();
         }
         catch {
             console.log(result);
@@ -858,8 +568,11 @@ const addFormSubmit = async (event) => {
     try {
         const msgFromSRV = JSON.parse(result);
         TREE = msgFromSRV.tree;
+        counterSpan.textContent = TREE.length;
+        TREE.filter(item => item.parentId == activeCardId).forEach(item => showedCards.add(item.id));
         hidePopUp(event.target.querySelector('input[type="submit"]'));
-        arrangement(document.querySelector('.card[data-id="' + currentAddCardId + '"]'));
+        showHideChilds(document.querySelector(`.card[data-id="${activeCardId}"]`));
+        arrangement();
     }
     catch {
         console.log(result);
@@ -995,32 +708,10 @@ const getTree = async () => {
     try { JSON.parse(result); }
     catch { throw new Error('Ошибка получения дерева: ' + result); }
     TREE = JSON.parse(result);
+    counterSpan.textContent = TREE.length;
 }
 
-const createData = () => {
-    const addChildren = obj => {
-        TREE.filter(item => item.parentId == obj.id).forEach(item => {
-            obj.children.push({
-                id: item.id,
-                name: item.name,
-                children: []
-            });
-        });
-        obj.children.forEach(item => addChildren(item));
-    }
 
-    const data = {
-        id: 1,
-        name: TREE.find(item => item.id == 1).name,
-        children: []
-    }
-
-    addChildren(data);
-
-    const root = d3.hierarchy(data);
-
-    console.log(d3.tree().nodeSize([60, 100])(root));
-}
 
 addEventListener('resize', renderCanvas);
 
@@ -1033,6 +724,7 @@ main.addEventListener('wheel', (event) => {
 area.addEventListener('click', async (event) => {
     additInfoForm.querySelector('input[type="submit"]').setAttribute('disabled', 'true');
     area.querySelectorAll('.card').forEach(card => card.classList.remove('active-card'));
+    activeCardId = null;
     const clickCard = event.composedPath().find(item => {
         if ( 'classList' in item )
         return item.classList.contains('card');
@@ -1077,7 +769,7 @@ area.addEventListener('click', async (event) => {
         }
         clickCard.classList.add('active-card');
         showHideChilds(clickCard);
-        await renderCanvas(clickCard);
+        await arrangement(clickCard);
         if ( document.querySelector('.card[data-parent-id="' + clickCard.getAttribute("data-id") + '"]') ) {
             let topPosition, rightPosition, botPosition;
             document.querySelectorAll('.card[data-parent-id="' + clickCard.getAttribute("data-id") + '"]').forEach((item, index) => {
