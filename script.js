@@ -291,7 +291,10 @@ const createData = () => {
 
     const root = d3.hierarchy(data);
 
-    return d3.tree().nodeSize([60, 250])(root);
+    const width = ( 'ontouchstart' in window ) ? 200 : 250;
+    const height = ( 'ontouchstart' in window ) ? 45 : 60;
+
+    return d3.tree().nodeSize([height, width])(root);
 }
 
 const arrangement = async () => {

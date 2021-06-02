@@ -18,7 +18,8 @@
         $footer .= '<input type="button" class="footer-btn" id="logout" onclick="logout()" title="Шығу">';
     }
     else {
-        $footer = '<input type="button" class="footer-btn" id="info" onclick="infoBtnClick()" title="Ақпарат">';
+        $footer = '<span class="counter"></span>';
+        $footer .= '<input type="button" class="footer-btn" id="info" onclick="infoBtnClick()" title="Ақпарат">';
         $footer .= '<input type="button" class="footer-btn" id="search" onclick="showPopUp('."'#search-pop-up')".'" title="Іздеу">';
         $footer .= '<input type="button" class="footer-btn" id="print" onclick="printBtnClick(this)" title="Басып шығару">';
         $footer .= '<a href="login.php" class="footer-btn" id="enter" title="Кіру"></a>';
