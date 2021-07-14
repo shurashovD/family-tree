@@ -19,7 +19,8 @@
 </head>
 <body>
     <div class="admin-conteiner">
-        <a href="orders.php" class="admin__link">Пайдаланушылар</a>
+        <a href="orders.php" class="admin__link">Пайдаланушылар құқық</a>
+        <a href="access.php" class="admin__link">Пайдаланушылар кіру</a>
         <a href="versions.php" class="admin__link">Нұсқалары</a>
     </div>
 </body>

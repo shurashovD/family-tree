@@ -18,7 +18,7 @@
             $_SESSION['user_id'] = $result['user_id'];
             $_SESSION['user_name'] = $result['user_name'];
             $_SESSION['user_rights'] = $result['user_rights'];
-            header("Location: index.php");
+            ($result['user_rights'] == 'block') ? header("Location: block.php") : header("Location: index.php");
             exit();
         }
     }

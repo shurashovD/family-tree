@@ -82,6 +82,27 @@
         exit( json_encode($result) );
     }
 
+    if ( isset($_GET['get-users']) ) {
+        $link = $db->db_connect();
+        $query = "SELECT * FROM `users` WHERE `user_rights`!='ADMIN'";
+        $result = mysqli_query($link, $query);
+        $result = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        exit( json_encode($result) );
+    }
+
+    if ( isset($_POST['change-user-rights']) ) {
+        $link = $db->db_connect();
+        $user_id = $_POST['user-id'];
+        $rights = $_POST['new-right'];
+        $query = "UPDATE `users` SET `user_rights`='$rights' WHERE `user_id`='$user_id'";
+        mysqli_query($link, $query);
+        
+        $query = "SELECT * FROM `users` WHERE `user_rights`!='ADMIN'";
+        $result = mysqli_query($link, $query);
+        $result = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        exit( json_encode($result) );
+    }
+
     if ( isset($_GET['query-rights']) ) {
         $link = $db->db_connect();
         if ( ($_SESSION['user_rights'] == 'full') || ($_SESSION['user_rights'] == 'ADMIN') ) exit( json_encode(["msg" => 'Толық құқықтар тағайындалды']) );
@@ -95,9 +116,9 @@
         $from = 'mimoza54@mimoza54.ru';
         $headers = "Content-type: text/html; charset='utf-8'\n";
         #$headers .= "From: $from\nReply-To: $from\n";
-        $msg = 'Новая заявка на получение прав с сайта family-tree. ';
+        $msg = 'Новая заявка на получение прав с сайта baijigit.kz. ';
         $msg .= 'Телефон для связи '.$phone.'.';
-        mail('han_togas@mail.ru', 'Family-tree', $msg, $headers);
+        mail('han_togas@mail.ru', 'Baijigit', $msg, $headers);
 
         $order_date = date("Y-m-d");
         $query = "INSERT INTO `orders`(`order_user`, `order_date`, `order_begin`, `order_phone`) VALUES ('$user', '$order_date', '$id', '$phone')";

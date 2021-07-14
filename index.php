@@ -1,6 +1,6 @@
 <?php
     require_once("author.php");
-    $footer = '<span class="counter"></span>';
+    $footer = '';
     if ( $_SESSION['user_rights'] == 'ADMIN' ) {
         $input_files = '<label class="pop-up-label">Тіркемелер';
         $input_files .= '<input type="file" class="pop-up__input" multiple accept=".jpg, .jpeg, .png" oninput="sendFiles(this)"></label>';
@@ -18,8 +18,9 @@
         $footer .= '<input type="button" class="footer-btn" id="logout" onclick="logout()" title="Шығу">';
     }
     else {
-        $footer = '<span class="counter"></span>';
-        $footer .= '<input type="button" class="footer-btn" id="info" onclick="infoBtnClick()" title="Ақпарат">';
+        header("Location: login.php");
+        exit();
+        $footer = '<input type="button" class="footer-btn" id="info" onclick="infoBtnClick()" title="Ақпарат">';
         $footer .= '<input type="button" class="footer-btn" id="search" onclick="showPopUp('."'#search-pop-up')".'" title="Іздеу">';
         $footer .= '<input type="button" class="footer-btn" id="print" onclick="printBtnClick(this)" title="Басып шығару">';
         $footer .= '<a href="login.php" class="footer-btn" id="enter" title="Кіру"></a>';
