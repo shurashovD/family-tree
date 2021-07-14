@@ -1,13 +1,14 @@
 <?php 
     session_start();
     $phone = $_POST['phone'];
-    $msg = '';
+    $msg = 'Оставьте заявку на получение доступа';
     if ( isset($_POST['order']) ) {
         $headers = "Content-type: text/html; charset='utf-8'\n";
-        $msg = 'Новая заявка на получение прав с сайта baijigit.kz. ';
-        $msg = 'Пользователь '.$_SESSION['user_name'].' хочет получить доступ к просмотру. ';
-        if ( strlen($phone) > 0 ) $msg .= 'Телефон для связи '.$phone.'.';
-        mail('shurashovd@yandex.ru', 'Baijigit', $msg, $headers);
+        $mail = 'Новая заявка на получение прав с сайта baijigit.kz. ';
+        $mail .= 'Пользователь '.$_SESSION['user_name'].' хочет получить доступ к просмотру. ';
+        if ( strlen($phone) > 0 ) $mail .= 'Телефон для связи '.$phone.'.';
+        mail('shurashovd@yandex.ru', 'Baijigit', $mail, $headers);
+        $msg = 'Заявка успешно отправлена';
     }
 ?>
 
@@ -25,7 +26,7 @@
 <body>
     <form action="" method="POST">
         <p>У пользователя <?php echo $_SESSION['user_name'] ?> нет прав на просмотр</p>
-        <p>Оставьте заявку на получение доступа</p>
+        <p><?php echo $msg ?></p>
         <label>
             Телефон
             <input type="text" name="phone" required value="<?php echo $phone; ?>">
