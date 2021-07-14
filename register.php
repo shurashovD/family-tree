@@ -54,7 +54,7 @@
         </label>
         <span><?php echo $msg; ?></span>
         <input type="submit" value="Готово" name="sign-up">
-        <a href="login.php">Авторландыру</a>
+        <a href="index.php">Авторландыру</a>
     </form>
 </body>
 </html>
