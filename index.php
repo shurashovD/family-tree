@@ -18,6 +18,8 @@
         $footer .= '<input type="button" class="footer-btn" id="logout" onclick="logout()" title="Шығу">';
     }
     else {
+        header("Location: block.php");
+        exit();
         $footer = '<span class="counter"></span>';
         $footer .= '<input type="button" class="footer-btn" id="info" onclick="infoBtnClick()" title="Ақпарат">';
         $footer .= '<input type="button" class="footer-btn" id="search" onclick="showPopUp('."'#search-pop-up')".'" title="Іздеу">';
