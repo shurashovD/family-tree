@@ -7,6 +7,10 @@
         $footer .= '<a href="admin.php" class="footer-btn" id="admin" title="Әкімші панелі"></a>';
     }
     if ( isset($_SESSION['user_id']) ) {
+        if ( $_SESSION['user_rights'] == 'block' ) {
+            header("Location: block.php");
+            exit();
+        }
         $footer .= '<input type="button" class="footer-btn" id="info" onclick="infoBtnClick()" title="Ақпарат">';
         $footer .= '<input type="button" class="footer-btn" id="save" onclick="saveBtnClick()" disabled title="Сақтау">';
         $footer .= '<input type="button" class="footer-btn" id="add" onclick="addBtnClick()" disabled title="Ұрпақ қосу">';
@@ -18,13 +22,8 @@
         $footer .= '<input type="button" class="footer-btn" id="logout" onclick="logout()" title="Шығу">';
     }
     else {
-        header("Location: block.php");
+        header("Location: login.php");
         exit();
-        $footer = '<span class="counter"></span>';
-        $footer .= '<input type="button" class="footer-btn" id="info" onclick="infoBtnClick()" title="Ақпарат">';
-        $footer .= '<input type="button" class="footer-btn" id="search" onclick="showPopUp('."'#search-pop-up')".'" title="Іздеу">';
-        $footer .= '<input type="button" class="footer-btn" id="print" onclick="printBtnClick(this)" title="Басып шығару">';
-        $footer .= '<a href="login.php" class="footer-btn" id="enter" title="Кіру"></a>';
     }
 ?>
 

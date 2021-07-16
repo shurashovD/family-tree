@@ -1,14 +1,14 @@
 <?php 
     session_start();
     $phone = $_POST['phone'];
-    $msg = 'Оставьте заявку на получение доступа';
+    $msg = 'Шежіре туралы мәліметтерді WhatsApp +7(702)342-52-79 нөмері арқылы алуға болады.';
     if ( isset($_POST['order']) ) {
         $headers = "Content-type: text/html; charset='utf-8'\n";
         $mail = 'Новая заявка на получение прав с сайта baijigit.kz. ';
         $mail .= 'Пользователь '.$_SESSION['user_name'].' хочет получить доступ к просмотру. ';
         if ( strlen($phone) > 0 ) $mail .= 'Телефон для связи '.$phone.'.';
         mail('han_togas@mail.ru', 'Baijigit', $mail, $headers);
-        $msg = 'Заявка успешно отправлена';
+        $msg = 'Өтінім жіберілді';
     }
 ?>
 
@@ -24,8 +24,8 @@
 </head>
 
 <body>
-    <form action="" method="POST">
-        <p>У пользователя <?php echo $_SESSION['user_name'] ?> нет прав на просмотр</p>
+    <form action="" method="POST" style="max-width: 600px">
+        <p>"ТОҒАС ХАН ҰРПАҚТАРЫ"-шежіре кітабі.</p>
         <p><?php echo $msg ?></p>
         <label>
             Телефон
@@ -33,7 +33,6 @@
         </label>
         <input type="submit" value="Кіру" name="order">
         <a href="login.php">Авторландыру</a>
-        Телефон для связи с администратором <a href="tel:+77023425279">+7 (702) 342-52-79</a>
     </form>
 </body>
 
