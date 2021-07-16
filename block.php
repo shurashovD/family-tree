@@ -7,7 +7,7 @@
         $mail = 'Новая заявка на получение прав с сайта baijigit.kz. ';
         $mail .= 'Пользователь '.$_SESSION['user_name'].' хочет получить доступ к просмотру. ';
         if ( strlen($phone) > 0 ) $mail .= 'Телефон для связи '.$phone.'.';
-        mail('shurashovd@yandex.ru', 'Baijigit', $mail, $headers);
+        mail('han_togas@mail.ru', 'Baijigit', $mail, $headers);
         $msg = 'Заявка успешно отправлена';
     }
 ?>
@@ -33,7 +33,7 @@
         </label>
         <input type="submit" value="Кіру" name="order">
         <a href="login.php">Авторландыру</a>
-        Телефон для связи с администратором <a href="tel:+77023525279">+7 (702) 352-52-79</a>
+        Телефон для связи с администратором <a href="tel:+77023425279">+7 (702) 342-52-79</a>
     </form>
 </body>
 
